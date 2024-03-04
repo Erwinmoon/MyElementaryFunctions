@@ -1,4 +1,4 @@
-# most accurest sum functions of two numbers
+# the most accurate sum functions of two numbers
 # inputing is two numbers in same type, for example a = 1.00000001(Float64) and b = 3.0(Float64)
 # outputing is one number in Float64 s = RN(a + b), or two numbers in Float64 s + t = a + b
 
