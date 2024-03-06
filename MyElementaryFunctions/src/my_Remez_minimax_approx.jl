@@ -59,3 +59,41 @@ function my_roots(g::Function, a::Float64, b::Float64, e::Float64)
 
     return mid
 end
+
+function my_Chebyshev_points(n::Int, a::Float64, b::Float64)
+    # generate n+2 Chebyshev points in [a, b]
+    pts = Vector{Float64}(undef, n + 2);
+    for k = 1 : 1 : n + 2
+        pts[n+3-k] = cos((k-1) * pi / (n + 1));
+    end
+    pts = (a + b) / 2 .+ (b - a) / 2 .*pts;
+    return pts
+end
+
+function my_Vandermonde_matrix(pts::Vector)
+    # generate n+2 × n+2 Vandermonde_matrix in pts
+    n = length(pts);
+    vdm = Matrix{Float64}(undef, n, n);
+    vdm[: , 1] .= 1.0;
+    for k = 2 : 1 : n
+        vdm[: , k] = vdm[: , k - 1] .* pts;
+    end
+    return vdm
+end
+
+function my_Remez_minimax_approx(f::Function, n::Int, a::Float64, b::Float64)
+    # return the minimax approx Pn of f(x)
+    pts = my_Chebyshev_points(n, a, b);
+    lhs = my_Vandermonde_matrix(pts);
+    rhs = f.(pts);
+    for k = 1 : 1 : n + 2
+        lhs[k , end] = (-1)^k;
+    end
+    coefficient = lhs \ rhs;
+
+
+
+    
+
+    
+end
