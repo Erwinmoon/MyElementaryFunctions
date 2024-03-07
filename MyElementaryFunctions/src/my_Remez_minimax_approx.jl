@@ -1,13 +1,16 @@
-function my_all_roots(g::Function, a::Float64, b::Float64, e::Float64)
+function my_all_roots(g::Function, a::T, b::T, e::Float64) where T <: Number
     # assume there are at most one root in each subintervals
+    # e is the tolerance, |g(x)| < e means x is one of the root of g
+    # smaller e, more accurate we would get
+    # note that T is also the type of roots
     if a > b
-        # checking [a,b] is nonempty 
+        # checking [a,b] is nonempty  
         println("Wraning: [$a,$b] is empty!")
         return
     end
 
     h = (b - a) / 200;
-    list_all_roots = Float64[];
+    list_all_roots = T[];
 
     for k = 1 : 1 : 200
         left = a + (k - 1) * h;
@@ -23,8 +26,10 @@ function my_all_roots(g::Function, a::Float64, b::Float64, e::Float64)
     return list_all_roots
 end
 
-function my_roots(g::Function, a::Float64, b::Float64, e::Float64)
+function my_roots(g::Function, a::T, b::T, e::Float64) where T <: Number
     # find one root of 1-d Function g(x) in an interval [a , b] by Golden Section Method
+    # e is the tolerance, |g(x)| < e means x is one of the root of g
+    # smaller e, more accurate we would get
     if a > b
         # checking [a,b] is nonempty 
         println("Wraning: [$a,$b] is empty!")
@@ -60,9 +65,9 @@ function my_roots(g::Function, a::Float64, b::Float64, e::Float64)
     return mid
 end
 
-function my_Chebyshev_points(n::Int, a::Float64, b::Float64)
+function my_Chebyshev_points(n::Int, a::T, b::T) where T <: Number
     # generate n+2 Chebyshev points in [a, b]
-    pts = Vector{Float64}(undef, n + 2);
+    pts = Vector{T}(undef, n + 2);
     for k = 1 : 1 : n + 2
         pts[n+3-k] = cos((k-1) * pi / (n + 1));
     end
@@ -70,10 +75,10 @@ function my_Chebyshev_points(n::Int, a::Float64, b::Float64)
     return pts
 end
 
-function my_Vandermonde_matrix(pts::Vector)
+function my_Vandermonde_matrix(pts::Vector{T}) where T <: Number
     # generate n+2 × n+2 Vandermonde_matrix in pts
     n = length(pts);
-    vdm = Matrix{Float64}(undef, n, n);
+    vdm = Matrix{T}(undef, n, n);
     vdm[: , 1] .= 1.0;
     for k = 2 : 1 : n
         vdm[: , k] = vdm[: , k - 1] .* pts;
@@ -81,12 +86,20 @@ function my_Vandermonde_matrix(pts::Vector)
     return vdm
 end
 
-function my_Remez_minimax_approx(f::Function, n::Int, a::Float64, b::Float64, e::Float64)
-    # return the minimax approx Pn of f(x)
+function my_Remez_minimax_approx(f::Function, n::Int, a::T, b::T, e::Float64) where T <: Number
+    # return the minimax approx Pn of f(x) in [a,b]
+    # a,b need to have the same type, such as Float64 or BigFloat
+    # n is the degree of the Polynomial Pn
+    # e is the tolerance, see also "my_all_roots, my_roots" 
+
     p = Polynomial([0.0]); 
     pts = my_Chebyshev_points(n, a, b);
     ratio = 2; 
-    threshold = 5e-5; 
+    if T == BigFloat
+        threshold = 1e-15;
+    else
+        threshold = sqrt(e); 
+    end
     count = 1;
 
     while (ratio < 1 - threshold || ratio > 1 + threshold) && count < 1e4
@@ -102,9 +115,11 @@ function my_Remez_minimax_approx(f::Function, n::Int, a::Float64, b::Float64, e:
         pts = my_all_roots(dpdf, a, b, e); 
         length_pts = length(pts);
         if length_pts > n + 2
-            println("Wraning: there are extreme values, try larger degree!")
+            println("Wraning: there are extreme values, try another degree!")
+            return
         elseif length_pts < n
             println("Wraning: not enough oscillations")
+            return
         elseif length_pts == n
             pts = [a; pts; b];
         elseif length_pts == n + 1 && p(a) - f(a) > p(b) - f(b)
@@ -114,8 +129,18 @@ function my_Remez_minimax_approx(f::Function, n::Int, a::Float64, b::Float64, e:
         end
         Emax = maximum(p.(pts) .- f.(pts));
         Emin = minimum(p.(pts) .- f.(pts));
-        ratio = abs(Emax / Emin);
-        count = count + 1;       
+        if Emin != 0 
+            ratio = abs(Emax / Emin);
+        elseif Emax != 0
+            ratio = 2;
+        else 
+            return
+        end
+        count = count + 1;  
+        if count == 1e4
+            # There are too many loops, so we can’t judge whether p is minimax approach of $f, but we still give an answer!
+            println("Wraning: this Polynomial maybe not minimax approach of $f, try to change some parameters, such as size of interval and tolerance, or compute it in another way!")  
+        end   
     end
-    return p
+    return p, ratio
 end

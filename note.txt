@@ -2,9 +2,10 @@
 my_Chebshev_pionts 中cos函数可以试着之后替换成自己的
 检查一下包的依赖（或者抽空把自己的多项式求值写了）
 
+
 Pkg.instantiate() 用来重新加载依赖项
 
-
+my_Remes... 的输入为什么不能是多项式？
 
 快速启动
 f(x) = sin(exp(x))
