@@ -111,7 +111,7 @@ function my_Remez_minimax_approx(f::Function, n::Int, a::T, b::T, e::Float64) wh
         coeffs = lhs \ rhs;
         p = Polynomial(coeffs[1:end-1]); 
 
-        dpdf = x -> ForwardDiff.derivative(p, x) - ForwardDiff.derivative(f, x);
+        dpdf = x -> derivative(p, x) - derivative(f, x);
         pts = my_all_roots(dpdf, a, b, e); 
         length_pts = length(pts);
         if length_pts > n + 2
